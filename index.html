@@ -3,86 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>파일 수합</title>
+<title>파일 수합기 — 여러 문서를, 하나로.</title>
+<meta name="description" content="엑셀·한글 문서를 브라우저에서 하나로. 설치와 회원가입 없이 XLSX와 HWPX 파일을 수합하세요.">
 <style>
-:root {
-  --bg: #f5f5f7; --card: #ffffff; --ink: #1d1d1f; --sub: #6e6e73; --line: #d2d2d7;
-  --blue: #0071e3; --blue-h: #0077ed; --fill: #f5f5f7; --seg: #e8e8ed; --red: #d70015; --green: #248a3d;
-  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", "Noto Sans KR", sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root { --bg: #000; --card: #1c1c1e; --ink: #f5f5f7; --sub: #98989d; --line: #38383a; --blue: #0a84ff; --blue-h: #409cff; --fill: #2c2c2e; --seg: #1c1c1e; --red: #ff453a; --green: #30d158; color-scheme: dark; }
-}
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font); -webkit-font-smoothing: antialiased; padding: 56px 20px 80px; }
-main { max-width: 640px; margin: 0 auto; }
-h1 { font-size: 34px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 8px; text-align: center; }
-.lead { text-align: center; color: var(--sub); margin: 0 0 28px; font-size: 17px; }
-.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--seg); border-radius: 10px; padding: 2px; margin: 0 auto 20px; max-width: 320px; }
-.seg button { border: 0; background: none; color: var(--ink); font: inherit; font-weight: 500; padding: 7px 0; border-radius: 8px; cursor: pointer; }
-.seg button[aria-selected="true"] { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
-.card { background: var(--card); border-radius: 18px; padding: 24px; }
-.hint { color: var(--sub); font-size: 13px; margin: 0 0 16px; }
-.drop { border: 1.5px dashed var(--line); border-radius: 14px; padding: 28px 16px; text-align: center; transition: .15s; }
-.drop.drag { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 8%, transparent); }
-.drop p { margin: 0 0 12px; color: var(--sub); }
-button.b { font: inherit; font-weight: 500; border: 0; border-radius: 980px; padding: 9px 20px; cursor: pointer; background: var(--blue); color: #fff; }
-button.b:hover:not(:disabled) { background: var(--blue-h); }
-button.b:disabled { opacity: .35; cursor: default; }
-button.b.plain { background: var(--fill); color: var(--blue); }
-button.t { border: 0; background: none; color: var(--blue); font: inherit; cursor: pointer; padding: 0; }
-button:focus-visible { outline: 3px solid color-mix(in srgb, var(--blue) 50%, transparent); outline-offset: 2px; }
-ol { list-style: none; margin: 16px 0 0; padding: 0; }
-ol li { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-top: 1px solid var(--line); min-width: 0; }
-ol li:first-child { border-top: 0; }
-ol li.over { background: var(--fill); }
-.n { color: var(--sub); width: 20px; text-align: right; font-variant-numeric: tabular-nums; }
-.nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.base { font-size: 12px; color: var(--sub); background: var(--fill); border-radius: 980px; padding: 1px 8px; white-space: nowrap; }
-.sz { color: var(--sub); font-size: 13px; white-space: nowrap; }
-.ic { border: 0; background: none; color: var(--sub); font-size: 16px; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; }
-.ic:hover:not(:disabled) { background: var(--fill); color: var(--ink); }
-.ic:disabled { opacity: .25; cursor: default; }
-.empty { color: var(--sub); text-align: center; padding: 8px 0 0; }
-.run { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
-.run .b { min-width: 160px; padding: 11px 28px; font-size: 16px; }
-.bar { width: 100%; height: 4px; border-radius: 2px; background: var(--seg); overflow: hidden; visibility: hidden; }
-.bar i { display: block; height: 100%; width: 0; background: var(--blue); transition: width .25s; }
-.bar.on { visibility: visible; }
-.st { color: var(--sub); font-size: 13px; min-height: 20px; text-align: center; }
-.err { color: var(--red); } .ok { color: var(--green); }
-.res { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; }
-.res p { margin: 0; }
-.warn { text-align: left; font-size: 13px; color: var(--sub); margin: 0; padding-left: 18px; width: 100%; }
-details { margin-top: 12px; font-size: 13px; color: var(--sub); }
-summary { cursor: pointer; }
-pre { margin: 8px 0 0; padding: 12px; border-radius: 10px; background: var(--fill); color: var(--ink); max-height: 200px; overflow: auto; white-space: pre-wrap; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-footer { text-align: center; color: var(--sub); font-size: 12px; margin-top: 24px; }
-[hidden] { display: none !important; }
+:root{--bg:#f7f6f2;--card:#fff;--ink:#222522;--sub:#687169;--line:#e1e5dc;--blue:#234a39;--fill:#f0f3ec;--red:#bc3838;--green:#25714e;--font:"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 var(--font);padding:0 24px 40px}button,a{-webkit-tap-highlight-color:transparent}button{font:inherit}a{color:inherit}main{max-width:1080px;margin:auto}.nav{height:88px;display:flex;align-items:center;justify-content:space-between}.brand{font-size:21px;font-weight:800;letter-spacing:-1px}.brand i{display:inline-grid;place-items:center;width:33px;height:33px;border-radius:10px;background:#244b39;color:white;font-style:normal;margin-right:8px}.github{font-size:13px;text-decoration:none;border:1px solid var(--line);padding:8px 15px;border-radius:100px;background:white}.github:hover{border-color:#244b39}.hero{display:grid;grid-template-columns:1.15fr 1fr;align-items:center;gap:32px;padding:42px 0 55px}.eyebrow{font:700 11px/1.5 var(--font);letter-spacing:3px;color:#4a755d}.hero h1{font-size:clamp(42px,5.2vw,65px);line-height:1.15;letter-spacing:-3px;margin:18px 0}.hero h1 em{font-style:normal;color:#37694d}.lead{color:var(--sub);font-size:16px;max-width:380px;margin:0}.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:23px}.chips span{font-size:12px;background:#eaf0e5;border-radius:30px;padding:5px 11px;color:#386247}.scene{height:290px;position:relative;display:grid;place-items:center;isolation:isolate}.orbit{position:absolute;width:245px;height:245px;border:1px dashed #a9bca7;border-radius:50%;animation:orbit 40s linear infinite}.orbit:after{content:'';position:absolute;top:26px;left:35px;width:10px;height:10px;background:#dc7f51;border-radius:50%;box-shadow:0 0 0 7px #dc7f5119}.sheet{position:absolute;width:125px;height:154px;background:#fff;border:1px solid #e0e7db;box-shadow:0 22px 40px #223f3020;border-radius:15px;display:flex;flex-direction:column;padding:19px;gap:10px;animation:float 5s ease-in-out infinite}.sheet:before{content:'';width:28px;height:28px;background:#e7efe2;border-radius:7px}.sheet:after{content:'';height:52px;background:repeating-linear-gradient(to bottom,#e4e9e1 0 4px,transparent 4px 14px)}.sheet.one{transform:translate(-95px,-20px) rotate(-16deg);animation-delay:-1s}.sheet.two{transform:translate(86px,-22px) rotate(15deg);animation-delay:-2s}.sheet.final{z-index:2;transform:translateY(24px);background:#244b39;border-color:#244b39;color:white}.sheet.final:before{content:'✓';display:grid;place-items:center;background:#f2b58b;color:#234a39;font-weight:900}.sheet.final:after{background:repeating-linear-gradient(to bottom,#ffffff45 0 4px,transparent 4px 14px)}.scene-label{position:absolute;bottom:0;font-size:10px;letter-spacing:3px;color:#65725e}.workspace{display:grid;grid-template-columns:240px 1fr;gap:36px;background:white;border:1px solid var(--line);border-radius:24px;padding:32px;box-shadow:0 14px 70px #243e3007}.side h2{font-size:23px;letter-spacing:-1px;margin:4px 0 12px}.side p{font-size:13px;color:var(--sub);margin:0 0 20px}.step{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:12px;color:var(--sub)}.step b{display:grid;place-items:center;border:1px solid var(--line);width:23px;height:23px;border-radius:50%;font-size:10px}.local{font-size:11px;color:#48694e;margin-top:28px;padding-top:20px;border-top:1px solid var(--line)}.seg{display:flex;gap:4px;padding:4px;border-radius:12px;background:#f1f3ee;width:100%;margin-bottom:18px}.seg button{flex:1;border:0;background:none;color:var(--sub);padding:9px;border-radius:9px;cursor:pointer;transition:background .2s,color .2s,box-shadow .2s}.seg button[aria-selected=true]{background:white;box-shadow:0 2px 6px #244b3910;color:var(--ink);font-weight:700}.card{animation:appear .35s ease both}.hint{color:var(--sub);font-size:12px;margin:0 0 16px;line-height:1.7}.drop{position:relative;overflow:hidden;border:1.5px dashed #b8c8b0;border-radius:16px;padding:25px 12px;text-align:center;background:#f8faf5;transition:background .25s,border-color .25s,transform .25s}.drop-icon{display:grid;place-items:center;width:43px;height:43px;border-radius:13px;background:#e9f0e1;margin:0 auto 10px;color:#3c6747;font-size:22px;transition:transform .25s}.drop.drag{background:#edf4e6;border-color:#3d7150;transform:scale(1.015)}.drop.drag .drop-icon{transform:translateY(-5px) rotate(-8deg)}.drop p{font-size:13px;margin:0 0 13px;color:var(--sub)}button.b{border:0;border-radius:11px;padding:10px 20px;cursor:pointer;background:var(--blue);color:#fff;font-weight:700;transition:transform .2s,box-shadow .2s,background .2s}button.b:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 18px #234a3926;background:#326348}button.b:active:not(:disabled){transform:scale(.97)}button.b:disabled{opacity:.4;cursor:default}button.b.plain{background:white;color:#345941;border:1px solid #dce5d5;font-size:12px;padding:7px 18px}button.t{background:none;border:0;color:var(--blue);cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #cf8c50;outline-offset:4px}ol{list-style:none;margin:14px 0 0;padding:0}ol li{display:flex;align-items:center;gap:8px;padding:10px 8px;background:#f7f8f4;border:1px solid #e6ebdf;border-radius:10px;margin:7px 0;min-width:0;animation:appear .3s ease both;animation-delay:calc(var(--i,0)*35ms)}ol li.over{background:#e5efd9;border-color:#789369}.n{color:#547353;font-size:11px;width:19px;text-align:center}.nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}.base{font-size:10px;color:#51644a;background:#e4eedb;border-radius:20px;padding:2px 6px;white-space:nowrap}.sz{color:var(--sub);font-size:10px;white-space:nowrap}.ic{border:0;background:none;color:#637260;font-size:14px;min-width:27px;height:28px;border-radius:7px;cursor:pointer}.ic:hover:not(:disabled){background:#e3eadc}.ic:disabled{opacity:.25;cursor:default}.empty{color:#8b9386;text-align:center;font-size:11px;margin:12px 0}.run{margin-top:20px;display:flex;flex-direction:column;gap:9px;align-items:center}.run>.b{width:100%;padding:13px;font-size:14px;position:relative;overflow:hidden}.bar{width:100%;height:5px;border-radius:5px;background:#e8eee2;overflow:hidden;visibility:hidden}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#456b3a,#a1c780);transition:width .3s;border-radius:5px}.bar.on{visibility:visible}.st{font-size:12px;color:var(--sub);min-height:20px;text-align:center}.err{color:var(--red)}.ok{color:var(--green)}.res{position:relative;margin-top:14px;padding:22px 16px;border:1px solid #d6e5ce;background:#f3f8ed;border-radius:16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;animation:reveal .5s ease both}.success-icon{display:grid;place-items:center;border-radius:50%;width:43px;height:43px;background:#305d3e;color:white;font-size:23px;animation:reveal .6s cubic-bezier(.2,1.6,.4,1)}.res h3{font-size:19px;letter-spacing:-.5px;margin:0}.res p{font-size:12px;color:var(--sub);margin:0}.warn{text-align:left;font-size:11px;color:#74663c;margin:0;padding-left:18px;width:100%;overflow-wrap:anywhere}details{margin-top:13px;color:var(--sub);font-size:11px}summary{cursor:pointer}pre{white-space:pre-wrap;overflow:auto;max-height:200px;border-radius:9px;padding:12px;background:#f4f6f0;font:11px/1.7 monospace}.busy .drop{opacity:.55}.busy .run>.b:after{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 25%,#ffffff22 50%,transparent 75%);animation:shine 1.7s infinite}.busy .drop-icon{animation:pulse 1.5s infinite}.confetti{position:fixed;z-index:20;top:-18px;pointer-events:none;width:8px;height:13px;background:var(--c);animation:fall var(--d) ease-in forwards;border-radius:2px}footer{display:flex;justify-content:space-between;gap:16px;margin-top:24px;color:#848c7e;font-size:11px}footer a{text-decoration:none}.count{font-size:11px;color:#5e7951;margin-top:14px}[hidden]{display:none!important}@keyframes appear{from{opacity:0;translate:0 9px}to{opacity:1;translate:0 0}}@keyframes reveal{from{opacity:0;scale:.92;translate:0 12px}to{opacity:1;scale:1;translate:0 0}}@keyframes float{50%{translate:0 -12px}}@keyframes orbit{to{rotate:360deg}}@keyframes shine{from{translate:-100% 0}to{translate:100% 0}}@keyframes pulse{50%{scale:.9;opacity:.6}}@keyframes fall{to{translate:var(--x) 105vh;rotate:var(--r);opacity:0}}@media(max-width:740px){body{padding:0 18px 28px}.nav{height:70px}.hero{grid-template-columns:1fr;gap:0;padding:22px 0 30px}.hero h1{font-size:46px}.scene{height:210px;margin-top:16px}.orbit{width:185px;height:185px}.sheet{width:95px;height:123px;padding:14px}.sheet.one{transform:translate(-78px,-10px) rotate(-16deg)}.sheet.two{transform:translate(72px,-12px) rotate(15deg)}.scene-label{bottom:-8px}.workspace{grid-template-columns:1fr;padding:20px;gap:18px}.side h2{font-size:21px}.side p,.steps,.local{display:none}.side h2{margin:0}.base{display:none}.sz{display:none}footer{flex-direction:column;gap:6px}.hero .lead{font-size:14px}.chips{margin-top:17px}.nav .github{font-size:11px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.confetti{display:none}}
 </style>
 </head>
 <body>
 <main>
-  <h1>파일 수합</h1>
-  <p class="lead">엑셀과 한글 파일을 순서대로 하나로.</p>
-  <div class="seg" role="tablist">
-    <button role="tab" id="tab-excel" aria-selected="true">엑셀</button>
-    <button role="tab" id="tab-hwpx" aria-selected="false">한글(HWPX)</button>
-  </div>
-  <div id="panels"></div>
-  <footer>파일은 이 브라우저 안에서만 처리되며 서버로 전송되지 않습니다.</footer>
+  <nav class="nav" aria-label="사이트 안내"><div class="brand"><i aria-hidden="true">≋</i>수합기<span style="color:#a0aa98">.</span></div><a class="github" href="https://github.com/cbjworld/file-merge" target="_blank" rel="noopener noreferrer">GitHub ↗</a></nav>
+  <header class="hero"><div><div class="eyebrow">LESS COPY. MORE DONE.</div><h1>흩어진 파일을,<br><em>하나의 완성으로.</em></h1><p class="lead">엑셀 명단부터 한글 문서까지.<br>복사하고 붙여넣던 시간을 돌려드릴게요.</p><div class="chips"><span>설치 없이</span><span>회원가입 없이</span><span>문서 전송 없이</span></div></div><div class="scene" aria-hidden="true"><div class="orbit"></div><div class="sheet one"></div><div class="sheet two"></div><div class="sheet final"></div><span class="scene-label">MANY FILES. ONE FLOW.</span></div></header>
+  <div class="workspace"><aside class="side"><div class="eyebrow">YOUR WORKSPACE</div><h2>수합을 시작하세요.</h2><p>파일은 여기에.<br>나머지는 수합기가 할게요.</p><div class="steps"><div class="step"><b>01</b>파일 형식 선택</div><div class="step"><b>02</b>파일 추가 · 순서 정리</div><div class="step"><b>03</b>합치고 다운로드</div></div><div class="local">◈ 문서 내용은 브라우저 안에서만 처리됩니다.</div></aside><div><div class="seg" role="tablist" aria-label="파일 형식"><button role="tab" id="tab-excel" aria-selected="true" aria-controls="panel-excel">엑셀 XLSX</button><button role="tab" id="tab-hwpx" aria-selected="false" aria-controls="panel-hwpx">한글 HWPX</button></div><div id="panels"></div></div></div>
+  <footer><span>문서 내용은 서버로 전송되지 않습니다.</span><a href="https://github.com/cbjworld/file-merge" target="_blank" rel="noopener noreferrer">유용했다면 GitHub에서 ⭐ 응원해 주세요 ↗</a></footer>
 </main>
 
 <template id="tpl">
-  <section class="card">
+  <section class="card" role="tabpanel">
     <p class="hint"></p>
-    <div class="drop"><p></p><button class="b plain" data-a="pick">파일 선택</button><input type="file" multiple hidden></div>
-    <ol></ol>
+    <div class="drop"><div class="drop-icon" aria-hidden="true">↥</div><p></p><button class="b plain" data-a="pick">파일 선택</button><input type="file" multiple hidden></div>
+    <div class="count" hidden></div><ol aria-label="수합할 파일 목록"></ol>
     <p class="empty">파일을 2개 이상 추가하세요.</p>
     <div class="run">
       <button class="b" data-a="run" disabled></button>
-      <div class="bar"><i></i></div>
-      <div class="st"></div>
+      <div class="bar" role="progressbar" aria-label="파일 수합 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
+      <div class="st" role="status" aria-live="polite"></div>
     </div>
     <div class="res" hidden></div>
     <details><summary>진행 로그</summary><pre></pre></details>
@@ -110,6 +56,7 @@ footer { text-align: center; color: var(--sub); font-size: 12px; margin-top: 24p
 
   Object.keys(CFG).forEach(function (k) {
     var n = document.getElementById('tpl').content.firstElementChild.cloneNode(true);
+    n.id = 'panel-' + k; n.setAttribute('aria-labelledby', 'tab-' + k);
     n.querySelector('.hint').textContent = CFG[k].hint;
     n.querySelector('.drop p').textContent = CFG[k].drop;
     n.querySelector('[data-a=run]').textContent = CFG[k].run;
@@ -123,12 +70,15 @@ footer { text-align: center; color: var(--sub); font-size: 12px; margin-top: 24p
     Object.keys(P).forEach(function (j) {
       P[j].hidden = j !== k;
       document.getElementById('tab-' + j).setAttribute('aria-selected', j === k);
+      document.getElementById('tab-' + j).tabIndex = j === k ? 0 : -1;
     });
   }
   Object.keys(CFG).forEach(function (k) { document.getElementById('tab-' + k).onclick = function () { tab(k); }; });
   tab('excel');
+  document.querySelector('.seg').addEventListener('keydown', function(e) { if (['ArrowLeft','ArrowRight','Home','End'].indexOf(e.key) === -1) return; e.preventDefault(); var k = e.key === 'Home' ? 'excel' : e.key === 'End' ? 'hwpx' : document.getElementById('tab-excel').getAttribute('aria-selected') === 'true' ? 'hwpx' : 'excel'; tab(k); document.getElementById('tab-' + k).focus(); });
 
   function add(k, list) {
+    if (S[k].busy) return; res(k); status(k, "");
     var skip = 0;
     Array.prototype.forEach.call(list, function (f) {
       var ok = CFG[k].ext.some(function (x) { return f.name.toLowerCase().slice(-x.length) === x; });
@@ -143,9 +93,13 @@ footer { text-align: center; color: var(--sub); font-size: 12px; margin-top: 24p
 
   function draw(k) {
     var st = S[k], ol = P[k].querySelector('ol');
+    P[k].classList.toggle('busy', st.busy); P[k].setAttribute('aria-busy', st.busy);
+    P[k].querySelector('[data-a=pick]').disabled = st.busy;
+    var count = P[k].querySelector('.count'); count.hidden = !st.files.length; count.textContent = st.files.length + '개 파일 · ' + size(st.files.reduce(function(n,f){ return n + f.size; },0));
+    P[k].querySelector('[data-a=run]').textContent = st.busy ? '문서를 하나로 모으는 중…' : CFG[k].run + ' →';
     ol.textContent = '';
     st.files.forEach(function (f, i) {
-      var li = el('li');
+      var li = el('li'); li.style.setProperty('--i', Math.min(i, 8));
       li.draggable = !st.busy;
       li.appendChild(el('span', 'n', i + 1));
       var nm = el('span', 'nm', f.name); nm.title = f.name; li.appendChild(nm);
@@ -156,7 +110,7 @@ footer { text-align: center; color: var(--sub); font-size: 12px; margin-top: 24p
         b.disabled = st.busy || (d[1] === -1 && i === 0) || (d[1] === 1 && i === st.files.length - 1);
         b.onclick = function () {
           if (!d[1]) st.files.splice(i, 1); else { var m = st.files.splice(i, 1)[0]; st.files.splice(i + d[1], 0, m); }
-          res(k); draw(k);
+          res(k); status(k, ''); draw(k);
         };
         li.appendChild(b);
       });
@@ -164,7 +118,7 @@ footer { text-align: center; color: var(--sub); font-size: 12px; margin-top: 24p
       li.ondragover = function (e) { if (st.drag !== null) { e.preventDefault(); li.classList.add('over'); } };
       li.ondragleave = function () { li.classList.remove('over'); };
       li.ondrop = function (e) {
-        if (st.drag === null) return; e.preventDefault(); e.stopPropagation();
+        if (st.busy || st.drag === null) return; e.preventDefault(); e.stopPropagation(); res(k); status(k, '');
         var m = st.files.splice(st.drag, 1)[0]; st.files.splice(i, 0, m); st.drag = null; draw(k);
       };
       li.ondragend = function () { st.drag = null; li.classList.remove('over'); };
@@ -185,9 +139,10 @@ footer { text-align: center; color: var(--sub); font-size: 12px; margin-top: 24p
   }
 
   async function run(k) {
+    if (S[k].busy || S[k].files.length < 2) return;
     var st = S[k], p = P[k], bar = p.querySelector('.bar'), fill = bar.firstElementChild, pre = p.querySelector('pre');
     st.busy = true; draw(k); res(k); pre.textContent = '';
-    bar.classList.add('on'); fill.style.width = '0%'; status(k, '');
+    bar.classList.add('on'); fill.style.width = '0%'; bar.setAttribute('aria-valuenow','0'); status(k, '파일을 읽고 있습니다…');
     var total = st.files.length;
     try {
       var items = [];
@@ -195,9 +150,9 @@ footer { text-align: center; color: var(--sub); font-size: 12px; margin-top: 24p
       var fn = k === 'excel' ? Merge.mergeExcel : Merge.mergeHwpx;
       var out = await fn(items, {
         log: function (m) { pre.textContent += m + '\n'; },
-        progress: function (d, t) { fill.style.width = Math.round(d / t * 100) + '%'; status(k, d + ' / ' + t + ' 파일'); return sleep(80); }
+        progress: function (d, t) { var percent = Math.round(d / t * 100); fill.style.width = percent + '%'; bar.setAttribute('aria-valuenow',percent); status(k, d + ' / ' + t + ' 파일 처리 · ' + percent + '%'); return sleep(80); }
       });
-      status(k, '완료', 'ok');
+      fill.style.width = '100%'; bar.setAttribute('aria-valuenow','100'); status(k, '수합이 완료되었습니다.', 'ok');
       done(k, out);
     } catch (e) {
       status(k, (e && e.message) || '문제가 생겼습니다.', 'err');
@@ -207,9 +162,11 @@ footer { text-align: center; color: var(--sub); font-size: 12px; margin-top: 24p
 
   function done(k, out) {
     var r = P[k].querySelector('.res'); r.textContent = ''; r.hidden = false;
+    r.appendChild(el('div','success-icon','✓')); r.appendChild(el('h3',null,'하나로 모았어요.'));
+    celebrate();
     var n = k === 'excel' ? '시트 ' + out.sheets + '개 · 항목 ' + out.rows + '개' : '구역 ' + out.sections + '개';
     r.appendChild(el('p', null, n + ' · ' + size(out.data.length)));
-    var b = el('button', 'b', '저장'); r.appendChild(b);
+    var b = el('button', 'b', '결과 파일 다운로드 ↓'); r.appendChild(b);
     b.onclick = function () {
       var blob = new Blob([out.data], { type: 'application/octet-stream' });
       var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -220,6 +177,11 @@ footer { text-align: center; color: var(--sub); font-size: 12px; margin-top: 24p
     if (out.warnings && out.warnings.length) {
       var ul = el('ul', 'warn'); out.warnings.forEach(function (w) { ul.appendChild(el('li', null, w)); }); r.appendChild(ul);
     }
+  }
+function celebrate() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var colors=['#48724e','#aec68f','#e4a177','#f0cd88'];
+    for(var i=0;i<36;i++){var c=el('i','confetti');c.setAttribute('aria-hidden','true'); c.style.left=(15+Math.random()*70)+'vw'; c.style.setProperty('--c',colors[i%4]);c.style.setProperty('--d',(1.4+Math.random()*1.5)+'s');c.style.setProperty('--x',(-100+Math.random()*200)+'px');c.style.setProperty('--r',(Math.random()*720)+'deg');document.body.appendChild(c);setTimeout(function(node){node.remove();},3200,c);}
   }
 })();
 </script>

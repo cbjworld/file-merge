@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>파일 수합</title>
+<style>
+:root {
+  --bg: #f5f5f7; --card: #ffffff; --ink: #1d1d1f; --sub: #6e6e73; --line: #d2d2d7;
+  --blue: #0071e3; --blue-h: #0077ed; --fill: #f5f5f7; --seg: #e8e8ed; --red: #d70015; --green: #248a3d;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", "Noto Sans KR", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #000; --card: #1c1c1e; --ink: #f5f5f7; --sub: #98989d; --line: #38383a; --blue: #0a84ff; --blue-h: #409cff; --fill: #2c2c2e; --seg: #1c1c1e; --red: #ff453a; --green: #30d158; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font); -webkit-font-smoothing: antialiased; padding: 56px 20px 80px; }
+main { max-width: 640px; margin: 0 auto; }
+h1 { font-size: 34px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 8px; text-align: center; }
+.lead { text-align: center; color: var(--sub); margin: 0 0 28px; font-size: 17px; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--seg); border-radius: 10px; padding: 2px; margin: 0 auto 20px; max-width: 320px; }
+.seg button { border: 0; background: none; color: var(--ink); font: inherit; font-weight: 500; padding: 7px 0; border-radius: 8px; cursor: pointer; }
+.seg button[aria-selected="true"] { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.card { background: var(--card); border-radius: 18px; padding: 24px; }
+.hint { color: var(--sub); font-size: 13px; margin: 0 0 16px; }
+.drop { border: 1.5px dashed var(--line); border-radius: 14px; padding: 28px 16px; text-align: center; transition: .15s; }
+.drop.drag { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 8%, transparent); }
+.drop p { margin: 0 0 12px; color: var(--sub); }
+button.b { font: inherit; font-weight: 500; border: 0; border-radius: 980px; padding: 9px 20px; cursor: pointer; background: var(--blue); color: #fff; }
+button.b:hover:not(:disabled) { background: var(--blue-h); }
+button.b:disabled { opacity: .35; cursor: default; }
+button.b.plain { background: var(--fill); color: var(--blue); }
+button.t { border: 0; background: none; color: var(--blue); font: inherit; cursor: pointer; padding: 0; }
+button:focus-visible { outline: 3px solid color-mix(in srgb, var(--blue) 50%, transparent); outline-offset: 2px; }
+ol { list-style: none; margin: 16px 0 0; padding: 0; }
+ol li { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-top: 1px solid var(--line); min-width: 0; }
+ol li:first-child { border-top: 0; }
+ol li.over { background: var(--fill); }
+.n { color: var(--sub); width: 20px; text-align: right; font-variant-numeric: tabular-nums; }
+.nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.base { font-size: 12px; color: var(--sub); background: var(--fill); border-radius: 980px; padding: 1px 8px; white-space: nowrap; }
+.sz { color: var(--sub); font-size: 13px; white-space: nowrap; }
+.ic { border: 0; background: none; color: var(--sub); font-size: 16px; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; }
+.ic:hover:not(:disabled) { background: var(--fill); color: var(--ink); }
+.ic:disabled { opacity: .25; cursor: default; }
+.empty { color: var(--sub); text-align: center; padding: 8px 0 0; }
+.run { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.run .b { min-width: 160px; padding: 11px 28px; font-size: 16px; }
+.bar { width: 100%; height: 4px; border-radius: 2px; background: var(--seg); overflow: hidden; visibility: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--blue); transition: width .25s; }
+.bar.on { visibility: visible; }
+.st { color: var(--sub); font-size: 13px; min-height: 20px; text-align: center; }
+.err { color: var(--red); } .ok { color: var(--green); }
+.res { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.res p { margin: 0; }
+.warn { text-align: left; font-size: 13px; color: var(--sub); margin: 0; padding-left: 18px; width: 100%; }
+details { margin-top: 12px; font-size: 13px; color: var(--sub); }
+summary { cursor: pointer; }
+pre { margin: 8px 0 0; padding: 12px; border-radius: 10px; background: var(--fill); color: var(--ink); max-height: 200px; overflow: auto; white-space: pre-wrap; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+footer { text-align: center; color: var(--sub); font-size: 12px; margin-top: 24px; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>파일 수합</h1>
+  <p class="lead">엑셀과 한글 파일을 순서대로 하나로.</p>
+  <div class="seg" role="tablist">
+    <button role="tab" id="tab-excel" aria-selected="true">엑셀</button>
+    <button role="tab" id="tab-hwpx" aria-selected="false">한글(HWPX)</button>
+  </div>
+  <div id="panels"></div>
+  <footer>파일은 이 브라우저 안에서만 처리되며 서버로 전송되지 않습니다.</footer>
+</main>
+
+<template id="tpl">
+  <section class="card">
+    <p class="hint"></p>
+    <div class="drop"><p></p><button class="b plain" data-a="pick">파일 선택</button><input type="file" multiple hidden></div>
+    <ol></ol>
+    <p class="empty">파일을 2개 이상 추가하세요.</p>
+    <div class="run">
+      <button class="b" data-a="run" disabled></button>
+      <div class="bar"><i></i></div>
+      <div class="st"></div>
+    </div>
+    <div class="res" hidden></div>
+    <details><summary>진행 로그</summary><pre></pre></details>
+  </section>
+</template>
+
+<script src="vendor/jszip.min.js"></script>
+<script src="vendor/exceljs.min.js"></script>
+<script src="core.js"></script>
+<script>
+(function () {
+  var CFG = {
+    excel: { ext: ['.xlsx', '.xlsm'], run: '합치기', out: 'xlsx', name: '취합결과', accept: '.xlsx,.xlsm',
+      hint: '첫 번째 파일의 서식을 기준으로 합칩니다. 헤더와 성명 열은 자동으로 찾고, 시트가 여러 개면 같은 순서의 시트끼리 합칩니다.',
+      drop: '엑셀 파일(.xlsx)을 끌어다 놓으세요' },
+    hwpx: { ext: ['.hwpx'], run: '이어붙이기', out: 'hwpx', name: '병합결과', accept: '.hwpx',
+      hint: '목록 순서대로 뒤에 이어붙입니다. 파일마다 원본 서식이 유지됩니다. .hwp는 한글에서 HWPX로 저장한 뒤 사용하세요.',
+      drop: '한글 파일(.hwpx)을 끌어다 놓으세요' }
+  };
+  var S = {}, P = {};
+  var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+  var size = function (n) { return n < 1048576 ? Math.max(1, Math.round(n / 1024)) + ' KB' : (n / 1048576).toFixed(1) + ' MB'; };
+  function stamp() { var d = new Date(), p = function (x) { return ('0' + x).slice(-2); }; return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()); }
+  function el(t, c, x) { var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+
+  Object.keys(CFG).forEach(function (k) {
+    var n = document.getElementById('tpl').content.firstElementChild.cloneNode(true);
+    n.querySelector('.hint').textContent = CFG[k].hint;
+    n.querySelector('.drop p').textContent = CFG[k].drop;
+    n.querySelector('[data-a=run]').textContent = CFG[k].run;
+    n.querySelector('input').accept = CFG[k].accept;
+    document.getElementById('panels').appendChild(n);
+    P[k] = n; S[k] = { files: [], busy: false, drag: null };
+    wire(k); draw(k);
+  });
+
+  function tab(k) {
+    Object.keys(P).forEach(function (j) {
+      P[j].hidden = j !== k;
+      document.getElementById('tab-' + j).setAttribute('aria-selected', j === k);
+    });
+  }
+  Object.keys(CFG).forEach(function (k) { document.getElementById('tab-' + k).onclick = function () { tab(k); }; });
+  tab('excel');
+
+  function add(k, list) {
+    var skip = 0;
+    Array.prototype.forEach.call(list, function (f) {
+      var ok = CFG[k].ext.some(function (x) { return f.name.toLowerCase().slice(-x.length) === x; });
+      if (!ok) { skip++; return; }
+      if (!S[k].files.some(function (g) { return g.name === f.name && g.size === f.size; })) S[k].files.push(f);
+    });
+    draw(k);
+    if (skip) status(k, skip + '개 파일은 형식이 달라 제외했습니다.', 'err');
+  }
+  function status(k, t, c) { var s = P[k].querySelector('.st'); s.textContent = t || ''; s.className = 'st ' + (c || ''); }
+  function res(k) { P[k].querySelector('.res').hidden = true; }
+
+  function draw(k) {
+    var st = S[k], ol = P[k].querySelector('ol');
+    ol.textContent = '';
+    st.files.forEach(function (f, i) {
+      var li = el('li');
+      li.draggable = !st.busy;
+      li.appendChild(el('span', 'n', i + 1));
+      var nm = el('span', 'nm', f.name); nm.title = f.name; li.appendChild(nm);
+      if (i === 0 && k === 'excel') li.appendChild(el('span', 'base', '서식 기준'));
+      li.appendChild(el('span', 'sz', size(f.size)));
+      [['↑', -1, '위로'], ['↓', 1, '아래로'], ['✕', 0, '제거']].forEach(function (d) {
+        var b = el('button', 'ic', d[0]); b.setAttribute('aria-label', f.name + ' ' + d[2]);
+        b.disabled = st.busy || (d[1] === -1 && i === 0) || (d[1] === 1 && i === st.files.length - 1);
+        b.onclick = function () {
+          if (!d[1]) st.files.splice(i, 1); else { var m = st.files.splice(i, 1)[0]; st.files.splice(i + d[1], 0, m); }
+          res(k); draw(k);
+        };
+        li.appendChild(b);
+      });
+      li.ondragstart = function (e) { st.drag = i; try { e.dataTransfer.setData('text/plain', i); } catch (x) {} };
+      li.ondragover = function (e) { if (st.drag !== null) { e.preventDefault(); li.classList.add('over'); } };
+      li.ondragleave = function () { li.classList.remove('over'); };
+      li.ondrop = function (e) {
+        if (st.drag === null) return; e.preventDefault(); e.stopPropagation();
+        var m = st.files.splice(st.drag, 1)[0]; st.files.splice(i, 0, m); st.drag = null; draw(k);
+      };
+      li.ondragend = function () { st.drag = null; li.classList.remove('over'); };
+      ol.appendChild(li);
+    });
+    P[k].querySelector('.empty').hidden = st.files.length >= 2;
+    P[k].querySelector('[data-a=run]').disabled = st.busy || st.files.length < 2;
+  }
+
+  function wire(k) {
+    var p = P[k], inp = p.querySelector('input'), drop = p.querySelector('.drop');
+    p.querySelector('[data-a=pick]').onclick = function () { inp.click(); };
+    inp.onchange = function () { add(k, inp.files); inp.value = ''; res(k); };
+    drop.ondragover = function (e) { if (S[k].drag === null) { e.preventDefault(); drop.classList.add('drag'); } };
+    drop.ondragleave = function () { drop.classList.remove('drag'); };
+    drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove('drag'); add(k, e.dataTransfer.files); res(k); };
+    p.querySelector('[data-a=run]').onclick = function () { run(k); };
+  }
+
+  async function run(k) {
+    var st = S[k], p = P[k], bar = p.querySelector('.bar'), fill = bar.firstElementChild, pre = p.querySelector('pre');
+    st.busy = true; draw(k); res(k); pre.textContent = '';
+    bar.classList.add('on'); fill.style.width = '0%'; status(k, '');
+    var total = st.files.length;
+    try {
+      var items = [];
+      for (var i = 0; i < total; i++) items.push({ name: st.files[i].name, data: await st.files[i].arrayBuffer() });
+      var fn = k === 'excel' ? Merge.mergeExcel : Merge.mergeHwpx;
+      var out = await fn(items, {
+        log: function (m) { pre.textContent += m + '\n'; },
+        progress: function (d, t) { fill.style.width = Math.round(d / t * 100) + '%'; status(k, d + ' / ' + t + ' 파일'); return sleep(80); }
+      });
+      status(k, '완료', 'ok');
+      done(k, out);
+    } catch (e) {
+      status(k, (e && e.message) || '문제가 생겼습니다.', 'err');
+    }
+    st.busy = false; draw(k);
+  }
+
+  function done(k, out) {
+    var r = P[k].querySelector('.res'); r.textContent = ''; r.hidden = false;
+    var n = k === 'excel' ? '시트 ' + out.sheets + '개 · 항목 ' + out.rows + '개' : '구역 ' + out.sections + '개';
+    r.appendChild(el('p', null, n + ' · ' + size(out.data.length)));
+    var b = el('button', 'b', '저장'); r.appendChild(b);
+    b.onclick = function () {
+      var blob = new Blob([out.data], { type: 'application/octet-stream' });
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = CFG[k].name + '_' + stamp() + '.' + CFG[k].out;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 15000);
+    };
+    if (out.warnings && out.warnings.length) {
+      var ul = el('ul', 'warn'); out.warnings.forEach(function (w) { ul.appendChild(el('li', null, w)); }); r.appendChild(ul);
+    }
+  }
+})();
+</script>
+</body>
+</html>

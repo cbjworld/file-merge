@@ -424,15 +424,16 @@ const Merge = (() => {
     if (!headerEnd) {
       for (let r = 1; r <= 8; r++) if (nonEmpty(r) >= 2) { headerEnd = r; break; }
     }
-    // 키워드(성명/이름) 행이 있으면 그 행(병합이면 병합 끝 행)까지를 헤더로 본다
+    // 설명 문장의 '성명'은 제외하고 실제 열 이름을 찾는다. 긴 안내문 뒤의 표도 지원한다.
     let keyCol = 0;
-    outer: for (let r = 1; r <= Math.max(headerEnd, 1) + 2 && r <= 10; r++) {
+    outer: for (let r = 1; r <= Math.min(ws.rowCount, 200); r++) {
+      if (nonEmpty(r) < 2) continue;
       for (let c = 1; c <= ncol; c++) {
         const v = cellVal(ws.getCell(r, c));
-        if (v !== null && NAME_KEYWORDS.some((kw) => String(v).toUpperCase().includes(kw))) {
+        const label = v === null ? '' : String(v).trim().toUpperCase().replace(/\s+/g, '').replace(/\([^)]*\)|（[^）]*）/g, '');
+        if (NAME_KEYWORDS.includes(label)) {
           keyCol = c - 1;
-          const m = merges.find((x) => x.top === r && x.left === c);
-          headerEnd = Math.max(headerEnd, m ? m.bottom : r);
+          headerEnd = merges.filter((x) => x.top <= r && x.bottom >= r).reduce((end, x) => Math.max(end, x.bottom), r);
           break outer;
         }
       }
@@ -482,8 +483,15 @@ const Merge = (() => {
         if (!keyToRow.has(k)) keyToRow.set(k, row);
       }
       const tableEnd = baseTable[baseTable.length - 1].row;
+      let hasFooter = false;
+      for (let r = tableEnd + 1; r <= ws.rowCount; r++) {
+        for (let c = 1; c <= layout.ncol; c++) {
+          if (ws.getCell(r, c).value !== null) { hasFooter = true; break; }
+        }
+        if (hasFooter) break;
+      }
       sheets.push({ idx, ws, layout, colCount: layout.ncol, refHeader: headerOf(ws, layout), keyToRow,
-        hasFooter: ws.rowCount > tableEnd, added: 0 });
+        templateRow: tableEnd, hasFooter, added: 0, lastAddedRow: tableEnd });
       log(`기준 파일 시트 ${idx + 1} '${ws.name}': 헤더 ${layout.headerEnd}행까지, 키 열 ${layout.keyCol + 1}번째, 항목 ${keyToRow.size}개`);
     });
     if (!sheets.length) throw new MergeError('기준 파일에서 합칠 수 있는 데이터 표를 찾지 못했습니다.');
@@ -531,7 +539,19 @@ const Merge = (() => {
             } else {
               const padded = vals.slice(0, st.colCount);
               while (padded.length < st.colCount) padded.push(null);
-              const row = st.ws.addRow(padded);
+              const row = st.hasFooter ? st.ws.addRow(padded) : st.ws.getRow(st.lastAddedRow + 1);
+              if (!st.hasFooter) row.values = padded;
+              const template = st.ws.getRow(st.templateRow);
+              row.height = template.height;
+              for (let ci = 1; ci <= st.colCount; ci++) {
+                const source = template.getCell(ci), target = row.getCell(ci);
+                target.style = JSON.parse(JSON.stringify(source.style));
+                if (source.dataValidation) target.dataValidation = JSON.parse(JSON.stringify(source.dataValidation));
+                if (source.type === ExcelJS.ValueType.Formula) {
+                  target.value = { sharedFormula: source.value.sharedFormula || source.address };
+                }
+              }
+              st.lastAddedRow = row.number;
               st.keyToRow.set(key, row.number);
               added++;
             }
@@ -548,11 +568,31 @@ const Merge = (() => {
       await progress(i + 1, total);
     }
     for (const st of sheets) {
+      if (st.added && !st.hasFooter) {
+        for (const cf of st.ws.conditionalFormattings || []) {
+          cf.ref = cf.ref.replace(/([A-Z]+)(\d+):([A-Z]+)(\d+)/g, (range, a, top, b, bottom) =>
+            +top > st.layout.headerEnd && +bottom === st.templateRow ? `${a}${top}:${b}${st.lastAddedRow}` : range);
+        }
+        if (st.ws.autoFilter && typeof st.ws.autoFilter === 'string') {
+          st.ws.autoFilter = st.ws.autoFilter.replace(/([A-Z]+)(\d+)$/, (end, col, r) => +r === st.templateRow ? `${col}${st.lastAddedRow}` : end);
+        }
+      }
       if (st.added && st.hasFooter) {
         warnings.push(`[참고] '${st.ws.name}' 시트에 새로 추가된 항목 ${st.added}건은 표 맨 아래(합계 행 뒤)에 들어갔습니다. 합계 수식 범위에는 포함되지 않습니다.`);
       }
     }
     const rowsTotal = sheets.reduce((n, s) => n + s.keyToRow.size, 0);
+    // 공유 수식을 일반 수식으로 저장해 뷰어 호환성을 높이고, 변경 전 계산값을 제거한다.
+    const formulas = [];
+    wb.worksheets.forEach((ws) => ws.eachRow((row) => row.eachCell((cell) => {
+      if (cell.type === ExcelJS.ValueType.Formula) {
+        const value = cell.value;
+        formulas.push([cell, value.sharedFormula || value.shareType === 'shared'
+          ? { formula: cell.formula } : { ...value, result: undefined }]);
+      }
+    })));
+    formulas.forEach(([cell, value]) => { cell.value = value; });
+    wb.calcProperties.fullCalcOnLoad = true;
     const buf = await wb.xlsx.writeBuffer();
     log(`\n완료: ${total}개 파일, 시트 ${sheets.length}개, 항목 ${rowsTotal}개`);
     return { data: new Uint8Array(buf), rows: rowsTotal, sheets: sheets.length, warnings };
